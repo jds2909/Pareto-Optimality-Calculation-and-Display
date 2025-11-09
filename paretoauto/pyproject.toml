@@ -1,0 +1,10 @@
+[project]
+name = "paretoauto"
+version = "0.0.1"
+description = "First push: basic algorithms only."
+requires-python = ">=3.9"
+dependencies = ["numpy"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
