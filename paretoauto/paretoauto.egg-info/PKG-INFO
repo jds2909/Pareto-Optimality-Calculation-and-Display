@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: paretoauto
+Version: 0.0.1
+Summary: First push: basic algorithms only.
+Requires-Python: >=3.9
+Requires-Dist: numpy

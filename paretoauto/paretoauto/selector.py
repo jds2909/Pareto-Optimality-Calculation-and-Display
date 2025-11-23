@@ -10,7 +10,7 @@ from .algorithms.ndsort import non_dominated_sort
 from .utils import apply_directions
 
 def sort_fronts(points, directions=None):
-    """ auto select an algorithm and return ranks fronts and info
+    """ auto select algorithm and return ranks fronts and info
 
     parameters
     points array like n by m objective values for n items and m objectives assumes minimisation
