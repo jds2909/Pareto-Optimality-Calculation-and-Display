@@ -1,0 +1,35 @@
+selector chooses 2d alg if 2 objectives, ndsort if 3+ objectives
+2d plotting works
+3d plotting works 
+but not highlighting or selecting points
+
+TO DO PRIORITY
+
+1) Optimise 3D alg 
+2) Documentation
+3) Add interactive visualisation features e.g. click selection & better highlighting
+4) Add platypus to benchmarks
+
+__init__.py	Package exports - defines public API
+
+selector.py	Auto-selects algorithm based on dimensions
+
+utils.py	Helper functions (direction flipping for min/max)
+
+io.py	Load CSV/Excel, link Pareto points back to source rows
+
+visualise.py	2D and 3D Pareto front plotting
+
+pareto2d.py	Fast O(n log n) sweep algorithm for 2 objectives
+
+ndsort.py	Non-dominated sorting for 3+ objectives (O(n²), needs optimization)
+
+datasets.py	Synthetic data generators (uniform, cloud, DTLZ1, etc.)
+
+run_bench.py	Timing benchmarks, comparison vs paretoset/pymoo
+
+test_2d.py	Unit tests for 2D algorithm
+
+test_ndsort.py	Unit tests for non-dominated sorting
+
+quickcheck.py	Quick demo/sanity check script

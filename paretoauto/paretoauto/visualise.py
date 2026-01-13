@@ -1,86 +1,194 @@
-# 2D and 3D plotting for pareto fronts
+# interactive 2d and 3d plotting using plotly
 
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import plotly.graph_objects as go
+import os
+import subprocess
+import platform
 
 
-def plot_pareto_2d(points, fronts=None, labels=None, highlight_front=0, show_all=True):
-    # plot 2D pareto front w/ highlighted optimal front
+def plot_pareto_2d(points, fronts=None, labels=None, highlight_front=0, show_all=True, source_info=None):
+    # 2d scatter plot with hover showing excel row numbers
     points = np.asarray(points)
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig = go.Figure()
 
     if labels is None:
         labels = ["Objective 1", "Objective 2"]
 
-    # if no fronts given, just plot all points
     if fronts is None:
-        ax.scatter(points[:, 0], points[:, 1], alpha=0.7)
+        # no fronts - just plot all points
+        fig.add_trace(go.Scatter(
+            x=points[:, 0], y=points[:, 1],
+            mode='markers', marker=dict(size=8, opacity=0.7),
+            name='All Points'
+        ))
     else:
-        # plot other fronts in gray first
+        # plot non-highlighted fronts in gray
         if show_all:
             for i, front in enumerate(fronts):
                 if i != highlight_front:
                     front_pts = points[front]
-                    ax.scatter(front_pts[:, 0], front_pts[:, 1],
-                              alpha=0.3, c='gray', s=20)
+                    fig.add_trace(go.Scatter(
+                        x=front_pts[:, 0], y=front_pts[:, 1],
+                        mode='markers', marker=dict(size=6, color='gray', opacity=0.3),
+                        name=f'Front {i}',
+                        hovertemplate=f'<b>Front {i}</b><br>{labels[0]}: %{{x:.3f}}<br>{labels[1]}: %{{y:.3f}}<extra></extra>'
+                    ))
 
         # plot highlighted front in red
         if highlight_front < len(fronts):
             front_pts = points[fronts[highlight_front]]
-            ax.scatter(front_pts[:, 0], front_pts[:, 1],
-                      c='red', s=50, alpha=0.9,
-                      label=f'Pareto Front {highlight_front}')
+            front_indices = fronts[highlight_front]
 
-            # connect front points with line
-            if len(front_pts) > 1:
-                sorted_idx = np.argsort(front_pts[:, 0])
-                sorted_pts = front_pts[sorted_idx]
-                ax.plot(sorted_pts[:, 0], sorted_pts[:, 1],
-                       'r-', alpha=0.5, linewidth=1)
+            # build hover text with excel row info if we have source data
+            hover_texts = []
+            for idx, point_idx in enumerate(front_indices):
+                hover_text = f'<b>Front {highlight_front}</b><br>{labels[0]}: {front_pts[idx, 0]:.3f}<br>{labels[1]}: {front_pts[idx, 1]:.3f}<br>'
 
-    ax.set_xlabel(labels[0])
-    ax.set_ylabel(labels[1])
-    ax.set_title("Pareto Front Visualisation")
-    ax.legend(loc='upper right')
-    ax.grid(True, alpha=0.3)
-    plt.tight_layout()
+                if source_info is not None:
+                    excel_row = point_idx + 2  # +2 for 1-indexing and header
+                    df = source_info["dataframe"]
+                    if len(df.columns) > 0:
+                        identifier = df.iloc[point_idx, 0]
+                        hover_text += f'Item: {identifier}<br>'
+                    hover_text += f'Excel Row: {excel_row}<br><i>Click to open in Excel</i>'
 
-    return fig, ax
+                hover_texts.append(hover_text)
+
+            fig.add_trace(go.Scatter(
+                x=front_pts[:, 0], y=front_pts[:, 1],
+                mode='markers+lines',
+                marker=dict(size=12, color='red', opacity=0.9),
+                line=dict(color='red', width=2),
+                name=f'Pareto Front {highlight_front}',
+                customdata=front_indices,
+                hovertemplate='%{text}<extra></extra>',
+                text=hover_texts
+            ))
+
+    fig.update_layout(
+        title="Interactive Pareto Front Visualization",
+        xaxis_title=labels[0], yaxis_title=labels[1],
+        hovermode='closest', width=900, height=700,
+        template='plotly_white'
+    )
+
+    if source_info is not None:
+        print("\n💡 Hover over points to see Excel row numbers")
+        print("   Use open_excel_row(source_info, row_index) to open in Excel")
+
+    return fig
 
 
-def plot_pareto_3d(points, fronts=None, labels=None, highlight_front=0, show_all=True):
-    # plot 3D pareto front w/ rotation support."""
+def plot_pareto_3d(points, fronts=None, labels=None, highlight_front=0, show_all=True, source_info=None):
+    # 3d scatter plot with rotation and hover
     points = np.asarray(points)
-    fig = plt.figure(figsize=(12, 9))
-    ax = fig.add_subplot(111, projection='3d')
+    fig = go.Figure()
 
     if labels is None:
         labels = ["Objective 1", "Objective 2", "Objective 3"]
 
-    # if no fronts given, just plot all points
     if fronts is None:
-        ax.scatter(points[:, 0], points[:, 1], points[:, 2], alpha=0.7)
+        fig.add_trace(go.Scatter3d(
+            x=points[:, 0], y=points[:, 1], z=points[:, 2],
+            mode='markers', marker=dict(size=5, opacity=0.7),
+            name='All Points'
+        ))
     else:
-        # plot other fronts in gray
+        # other fronts in gray
         if show_all:
             for i, front in enumerate(fronts):
                 if i != highlight_front:
                     front_pts = points[front]
-                    ax.scatter(front_pts[:, 0], front_pts[:, 1], front_pts[:, 2],
-                              alpha=0.2, c='gray', s=15)
+                    fig.add_trace(go.Scatter3d(
+                        x=front_pts[:, 0], y=front_pts[:, 1], z=front_pts[:, 2],
+                        mode='markers', marker=dict(size=4, color='gray', opacity=0.2),
+                        name=f'Front {i}',
+                        hovertemplate=f'<b>Front {i}</b><br>{labels[0]}: %{{x:.3f}}<br>{labels[1]}: %{{y:.3f}}<br>{labels[2]}: %{{z:.3f}}<extra></extra>'
+                    ))
 
-        # plot highlighted front in red
+        # highlighted front in red
         if highlight_front < len(fronts):
             front_pts = points[fronts[highlight_front]]
-            ax.scatter(front_pts[:, 0], front_pts[:, 1], front_pts[:, 2],
-                      c='red', s=50, alpha=0.9,
-                      label=f'Pareto Front {highlight_front}')
+            front_indices = fronts[highlight_front]
 
-    ax.set_xlabel(labels[0])
-    ax.set_ylabel(labels[1])
-    ax.set_zlabel(labels[2])
-    ax.set_title("3D Pareto Front Visualisation")
-    ax.legend(loc='upper right')
+            hover_texts = []
+            for idx, point_idx in enumerate(front_indices):
+                hover_text = f'<b>Front {highlight_front}</b><br>{labels[0]}: {front_pts[idx, 0]:.3f}<br>{labels[1]}: {front_pts[idx, 1]:.3f}<br>{labels[2]}: {front_pts[idx, 2]:.3f}<br>'
 
-    return fig, ax
+                if source_info is not None:
+                    excel_row = point_idx + 2
+                    df = source_info["dataframe"]
+                    if len(df.columns) > 0:
+                        identifier = df.iloc[point_idx, 0]
+                        hover_text += f'Item: {identifier}<br>'
+                    hover_text += f'Excel Row: {excel_row}'
+
+                hover_texts.append(hover_text)
+
+            fig.add_trace(go.Scatter3d(
+                x=front_pts[:, 0], y=front_pts[:, 1], z=front_pts[:, 2],
+                mode='markers', marker=dict(size=8, color='red', opacity=0.9),
+                name=f'Pareto Front {highlight_front}',
+                customdata=front_indices,
+                hovertemplate='%{text}<extra></extra>',
+                text=hover_texts
+            ))
+
+    fig.update_layout(
+        title="3D Pareto Front Visualization",
+        scene=dict(
+            xaxis_title=labels[0], yaxis_title=labels[1], zaxis_title=labels[2],
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5))
+        ),
+        width=900, height=700, template='plotly_white'
+    )
+
+    if source_info is not None:
+        print("\n💡 Hover shows Excel row numbers. Use open_excel_row() to open file.")
+
+    return fig
+
+
+def open_excel_row(source_info, row_index, save_with_fronts_path=None):
+    # opens excel/csv file at a specific row
+    # use annotated file if it exists, otherwise original
+    if save_with_fronts_path and os.path.exists(save_with_fronts_path):
+        filepath = os.path.abspath(save_with_fronts_path)
+    else:
+        filepath = os.path.abspath(source_info["filepath"])
+
+    excel_row = row_index + 2  # +2 for 1-indexing and header
+
+    try:
+        # open based on os
+        if platform.system() == 'Windows':
+            os.startfile(filepath)
+        elif platform.system() == 'Darwin':
+            subprocess.run(['open', filepath])
+        else:
+            subprocess.run(['xdg-open', filepath])
+
+        print(f"✓ opened {filepath}")
+        print(f"  go to row {excel_row}")
+    except Exception as e:
+        print(f"❌ couldn't open: {e}")
+        print(f"   manual path: {filepath}, row {excel_row}")
+
+
+def create_interactive_plot_with_excel_link(points, fronts, source_info, labels=None,
+                                            highlight_front=0, is_3d=False, save_with_fronts_path=None):
+    # convenience function that creates plot and prints usage tips
+    if is_3d:
+        fig = plot_pareto_3d(points, fronts, labels, highlight_front, True, source_info)
+    else:
+        fig = plot_pareto_2d(points, fronts, labels, highlight_front, True, source_info)
+
+    print("\n" + "="*60)
+    print("📊 interactive pareto viz")
+    print("="*60)
+    print("hover to see excel row numbers")
+    print(f"example: open_excel_row(source_info, {fronts[highlight_front][0]})")
+    print("="*60 + "\n")
+
+    return fig
