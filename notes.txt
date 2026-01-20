@@ -1,8 +1,3 @@
-selector chooses 2d alg if 2 objectives, ndsort if 3+ objectives
-2d plotting works
-3d plotting works 
-but not highlighting or selecting points
-
 TO DO PRIORITY
 
 1) Optimise 3D alg 
@@ -33,3 +28,13 @@ test_2d.py	Unit tests for 2D algorithm
 test_ndsort.py	Unit tests for non-dominated sorting
 
 quickcheck.py	Quick demo/sanity check script
+
+DEMO 
+
+1st Graph
+
+This shows just the Pareto front - the 7 points that represent the best trade-offs. The 2D algorithm only identifies Front 0, so we're seeing those optimal points connected by the red line.
+
+These points form the boundary - if I had shown all 200 points, everything else would be 'behind' this line, dominated by at least one point on the front.
+
+The 2D algorithm is optimized to find just the Pareto front quickly. It doesn't compute the secondary fronts. The n-D algorithm does return all fronts, so you'd see the gray dominated points there. Adding full front ranking to the 2D case is a possible enhancement.

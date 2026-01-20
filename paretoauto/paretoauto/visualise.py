@@ -67,7 +67,7 @@ def plot_pareto_2d(points, fronts=None, labels=None, highlight_front=0, show_all
             ))
 
     fig.update_layout(
-        title="Interactive Pareto Front Visualization",
+        title="Interactive Pareto Front Visualisation",
         xaxis_title=labels[0], yaxis_title=labels[1],
         hovermode='closest', width=900, height=700,
         template='plotly_white'
@@ -136,7 +136,7 @@ def plot_pareto_3d(points, fronts=None, labels=None, highlight_front=0, show_all
             ))
 
     fig.update_layout(
-        title="3D Pareto Front Visualization",
+        title="3D Pareto Front Visualisation",
         scene=dict(
             xaxis_title=labels[0], yaxis_title=labels[1], zaxis_title=labels[2],
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.5))
