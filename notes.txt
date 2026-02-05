@@ -38,3 +38,8 @@ This shows just the Pareto front - the 7 points that represent the best trade-of
 These points form the boundary - if I had shown all 200 points, everything else would be 'behind' this line, dominated by at least one point on the front.
 
 The 2D algorithm is optimized to find just the Pareto front quickly. It doesn't compute the secondary fronts. The n-D algorithm does return all fronts, so you'd see the gray dominated points there. Adding full front ranking to the 2D case is a possible enhancement.
+
+2D hiphops xml parses & visualises successfully but filepath is hardcoded
+I will add cmd line cmds so user can specify file path containing xmls / js HiPHOPS outputs
+if no filepath specified open file picker to select a directory.
+
