@@ -1,0 +1,2 @@
+[console_scripts]
+paretoauto = paretoauto.cli:main

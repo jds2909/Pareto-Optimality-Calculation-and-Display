@@ -1,5 +1,6 @@
 pyproject.toml
 paretoauto/__init__.py
+paretoauto/cli.py
 paretoauto/io.py
 paretoauto/selector.py
 paretoauto/utils.py
@@ -7,9 +8,11 @@ paretoauto/visualise.py
 paretoauto.egg-info/PKG-INFO
 paretoauto.egg-info/SOURCES.txt
 paretoauto.egg-info/dependency_links.txt
+paretoauto.egg-info/entry_points.txt
 paretoauto.egg-info/requires.txt
 paretoauto.egg-info/top_level.txt
 paretoauto/algorithms/ndsort.py
+paretoauto/algorithms/ndsortvectorised.py
 paretoauto/algorithms/pareto2d.py
 tests/test_2d.py
 tests/test_ndsort.py
