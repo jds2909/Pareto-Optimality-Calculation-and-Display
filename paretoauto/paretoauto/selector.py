@@ -26,12 +26,21 @@ def sort_fronts(points, directions=None):
     P = apply_directions(points, directions)
     n, m = P.shape
 
-    # for 2 objectives, use fast 2d alg return only front 0
+    # for 2 objectives, peel fronts one at a time using the fast 2d sweep
     if m == 2:
-        f0 = pareto_front_indices_2d(P)
-        ranks = np.ones(n, dtype=int)
-        ranks[f0] = 0
-        fronts = [f0.tolist()]
+        ranks = np.empty(n, dtype=int)
+        fronts = []
+        remaining = list(range(n))
+        r = 0
+        while remaining:
+            local_f0 = pareto_front_indices_2d(P[remaining])
+            global_f0 = [remaining[i] for i in local_f0]
+            fronts.append(global_f0)
+            for i in global_f0:
+                ranks[i] = r
+            keep = set(global_f0)
+            remaining = [i for i in remaining if i not in keep]
+            r += 1
         info = {"algo": "2d_sweep", "approx": False}
         return ranks, fronts, info
 

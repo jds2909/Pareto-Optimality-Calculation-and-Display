@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python benchmarks/run_bench.py)",
+      "Bash(python -m pytest tests/test_2d.py tests/test_ndsort.py tests/test_sort_fronts.py tests/test_evolution_hover.py -v)"
+    ]
+  }
+}

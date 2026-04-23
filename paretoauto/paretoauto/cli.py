@@ -5,7 +5,7 @@ import os
 import glob
 
 from .io import load_hiphops
-from .visualise import plot_pareto_2d
+from .visualise import plot_pareto_2d, plot_pareto_3d, plot_evolution_animation
 
 
 def pick_folder():
@@ -123,15 +123,82 @@ def cmd_hiphops(args):
         print(f"  Objectives: {source_info['columns']}")
         print(f"  Solutions: {len(points)}")
 
-        # plot
+        # plot — auto-detect 2D or 3D from objective count
         fronts = [list(range(len(points)))]
         labels = source_info['columns']
+        n_obj = len(labels)
 
-        fig = plot_pareto_2d(points, fronts, labels, source_info=source_info)
+        if n_obj == 3:
+            fig = plot_pareto_3d(points, fronts, labels, source_info=source_info)
+        else:
+            fig = plot_pareto_2d(points, fronts, labels, source_info=source_info)
+
         fig.update_layout(
             title=f"HiP-HOPS Pareto Front - {source_info['model']} (Gen {source_info['generation']})"
         )
         fig.show()
+
+
+def cmd_evolution(args):
+    """Handle the evolution animation command."""
+    path = args.path
+
+    # if no path given, open file picker
+    if not path:
+        print("No path specified, opening folder picker...")
+        path = pick_folder()
+        if not path:
+            print("No folder selected, exiting.")
+            return
+
+    if not os.path.exists(path):
+        print(f"Path not found: {path}")
+        return
+
+    # must be a folder containing multiple generation files
+    if os.path.isfile(path):
+        print("Please provide a folder containing multiple generation files, not a single file.")
+        return
+
+    files = find_hiphops_files(path)
+    if not files:
+        print(f"No HiP-HOPS generation files found in: {path}")
+        return
+
+    if len(files) < 2:
+        print("Only one generation file found — use 'paretoauto hiphops' for a single-file view.")
+        return
+
+    print(f"\nLoading {len(files)} generation(s) for evolution animation...")
+
+    generations_data = []
+    labels = None
+    is_3d = None
+
+    for filepath in files:
+        # extract generation number for display
+        basename = os.path.basename(filepath)
+        gen_num = 0
+        if 'Generation' in basename:
+            try:
+                gen_num = int(basename.split('Generation')[1].split('_')[0])
+            except (IndexError, ValueError):
+                pass
+
+        print(f"  Loading gen {gen_num}: {basename}")
+        points, source_info = load_hiphops(filepath)
+
+        if labels is None:
+            labels = source_info['columns']
+            is_3d = len(labels) == 3
+
+        generations_data.append((gen_num, points, source_info))
+
+    print(f"\nObjectives: {labels}")
+    print(f"Plot mode: {'3D' if is_3d else '2D'}")
+
+    fig = plot_evolution_animation(generations_data, labels, is_3d)
+    fig.show()
 
 
 def main():
@@ -145,7 +212,7 @@ def main():
     # hiphops command
     hiphops_parser = subparsers.add_parser(
         'hiphops',
-        help='Visualise HiP-HOPS optimisation output'
+        help='Visualise HiP-HOPS optimisation output (single file or selected generation)'
     )
     hiphops_parser.add_argument(
         'path',
@@ -154,6 +221,19 @@ def main():
         help='Path to file or folder containing HiP-HOPS output (opens picker if not specified)'
     )
     hiphops_parser.set_defaults(func=cmd_hiphops)
+
+    # evolution command
+    evolution_parser = subparsers.add_parser(
+        'evolution',
+        help='Animated Pareto front evolution across all generations in a folder'
+    )
+    evolution_parser.add_argument(
+        'path',
+        nargs='?',
+        default=None,
+        help='Path to folder containing HiP-HOPS generation files (opens picker if not specified)'
+    )
+    evolution_parser.set_defaults(func=cmd_evolution)
 
     args = parser.parse_args()
 
